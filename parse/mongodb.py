@@ -163,7 +163,7 @@ def insertWord(root:TreeNode,word:str,timeStamp:str,i:int):
         return
     if root.children[ord(word[i])-ord('a')] == None:
         root.children[ord(word[i])-ord('a')] = TreeNode(root.videoID,root.treeID,word[i])
-    insertWord(root.children[ord(word[i])-ord('a')],word,timeStamp,1)
+    insertWord(root.children[ord(word[i])-ord('a')],word,timeStamp,i+1)
 
 
 
