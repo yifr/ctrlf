@@ -1,6 +1,7 @@
 #Python libraries that we need to import for our bot
 import random
 import logging
+import requests
 import secret_info
 from wit import Wit
 from pymessenger.bot import Bot
@@ -25,19 +26,19 @@ def receive_message():
     #if the request was not get, it must be POST and we can just proceed with sending a message back to user
     else:
         # get whatever message a user sent the bot
-       output = request.json
-       if output['object'] == 'page':
-           for entry in output['entry']:
-               messaging = event['messaging']
-               for message in messaging:
-                   message = messaging[0]
-                   fb_id = message['sender']['id']
-                   text = message['message']['text']
-                   response = wit_bot.message(msg=text, context={'session_id':fb_id})
-                   handle_message(response, fb_id)
+        data = request.json
+        if data['obect'] == 'page':
+            for entry in data['entry']:
+            messages = entry['messaging']
+            if messages[0]:
+                message = messages[0]
+                fb_id = message['sender']['id']
+                text = message['message']['text']
+                response = wit_bot.message(msg=text, context={'session_id':fb_id})
+                handle_message(response, fb_id)
        else:
            return 'Received Different Event'
-    return None
+    return "Success" 
 
 
 def verify_fb_token(token_sent):
@@ -61,7 +62,7 @@ def send_message(sender_id, text):
 def get_entity_value(entities, entity):
     if entity not in entities:
         return None
-    val = entities['url'][0]
+    val = entities[entity][0]
     if not val:
         return None
 
@@ -106,9 +107,10 @@ def handle_message(response, fb_id):
 
     #Add user's subtopics
     else:
-        if len(subtopic) == 0:
+        if topic == None:
             if confirmation:
-                response = "Thanks for confirming that. I'll add it to the list of subtopics to flag for you. Anything else?"
+                response = "Thanks for confirming that. I'll add "response['text'] " to the list of subtopics to flag for you. Anything else?"
+                user['topic'].append(response['text'])
                 send_message(fb_id, response)
                 return "Message sent"
             else:
