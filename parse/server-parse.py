@@ -26,9 +26,12 @@ def searchSub():
     requestID = str(mongo.uuid.uuid4())
     suggestions = mongo.find(request.json["topic"].upper(), request.json["subtopic"])
     print(suggestions)
+    timeStamps = suggestions[0][1][1]["timeStamp"]
+    for i in range(0,len(timeStamps)):
+        timeStamps[i] /= 60
     ret = {
         "videoLink":suggestions[0][0],
-        "timeStamps":suggestions[0][1]
+        "timeStamps":timeStamps
     }
     return jsonify(ret)
 
