@@ -131,7 +131,10 @@ def getVideoLink(videoID:str):
     return client["meta"]["videoLinks"].find({"videoID":videoID})["videoLink"]
 
 def extractSymbols(word):
-    return re.sub(r'[^\w]', '', word)
+    word = re.sub(r'[^\w]', '', word)
+    if word.isalpha():
+        return word
+    return ""
 
 def insertTree(topic:str,root:TreeNode):
     if client == None:
@@ -153,6 +156,8 @@ def buildTree(transcripts:list,videoID:str):
     root = TreeNode(videoID,None,None)
     for word in transcripts:
         cleanWord = extractSymbols(word["word"]).lower()
+        if cleanWord == "":
+            continue
         insertWord(root,cleanWord,word["start_time"],0)
     return root
 
