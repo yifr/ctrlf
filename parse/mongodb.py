@@ -81,22 +81,34 @@ def diffTime(timeStamp1,timeStamp2):
     return abs(timeStamp1-timeStamp2)
 
 def computeChains(suggestions:list):
-    chains = [[suggestion[0]["timeStamp"][i]] for i in range(0,len(suggestion[0]["timeStamp"]))]
+    chains = [[suggestions[0]["timeStamp"][i]] for i in range(0,len(suggestions[0]["timeStamp"]))]
     finished = {}
+    chainMax = 1
     for i in range(1,len(suggestions)):
+        j = 0
         for chain in chains:
             for timeStamp in suggestions[i]["timeStamp"]:
-                if diffTime(chain[len(chain)-1],timeStamp) <= 1 and chain not in finished:
+
+                if diffTime(chain[len(chain)-1],timeStamp) <= 1 and j not in finished:
                     chain.append(timeStamp)
-                    finished[chain] = True
-            if len(chain) != i+1:
-                chain = None
-            finished = {}
+                    finished[j] = True
+
+           finished = {}
+           j +=1
+        chainMax +=1
+    newChains = []
+
+    for chain in chains:
+        if(len(chain) == chainMax):
+            newChains.append(chain)
+    
+        
     word = 0
+    print(newChains)
     for suggestion in suggestions:
         suggestion["timeStamp"] = []
-        for i in range(0,len(chains[word])):
-            suggestion["timeStamp"].append(chains[i][word])
+        for i in range(0,len(newChains[word])):
+            suggestion["timeStamp"].append(newChains[i][word])
         word += 1
 
 def find(topic:str,subtopic:str):
@@ -158,7 +170,7 @@ def insertTree(topic:str,root:TreeNode):
         "parent":root.parent,
         "letter":root.letter
     }
-    client["topics"][topic].insert_one(post,w=0)
+    client["topics"][topic].insert_one(post)
     for i in range(0,26):
         if root.children[i] != None:
             insertTree(topic,root.children[i])
