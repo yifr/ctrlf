@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import config
 import uuid
+from util import PreParseNode
 
 
 
@@ -65,7 +66,7 @@ def insertTopic(topic:str,transcripts:list,videoID:str,videoLink:str):
     if client == None:
         print("CLIENT IS NONE!")
     collection = client["topics"][topic]
-    insertTree(buildTree(transcripts))
+    insertTree(buildTree(transcripts,videoID))
     client["meta"]["videoLinks"].insert_one({"videoID":videoID,"videoLink":videoLink})
 
 
@@ -147,8 +148,8 @@ def insertTree(topic:str,root:TreeNode):
             insertTree(topic,root.children[i])
 
 #TO-DO: Need to see how transcripts look like
-def buildTree(transcripts:list):
-    root = TreeNode(transcripts[0].videoID,None,None)
+def buildTree(transcripts:list,videoID:str):
+    root = TreeNode(videoID,None,None)
     for word in transcripts:
         cleanWord = extractSymbols(word["word"]).lower()
         insertWord(root,cleanWord,word["start_time"],0)

@@ -11,6 +11,7 @@ from google.cloud.speech import types
 import subprocess
 from threading import Thread,Lock
 import mongodb as mongo
+from util import PreParseNode
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 import config
@@ -35,20 +36,6 @@ def my_hook(d):
     if d['status'] == 'finished':
         print('Done downloading, now converting ...')
 
-class PreParseNode(object):
-    videoID = ""
-    title = ""
-    youtbeUrl = ""
-    transcript = []
-    def __init__(self,youtbeUrl,videoID,title,transcript):
-        self.videoID = videoID
-        self.title = title
-        self.youtbeUrl = youtbeUrl
-        self.transcript = transcript
-
-
-    def __repr__(self):
-        pass
 
 
 def reduce(tup):
