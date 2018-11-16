@@ -94,6 +94,12 @@ def computeChains(suggestions:list):
             suggestion["timeStamp"].append(chains[i][word])
         word += 1
 
+def find(topic:str,subtopic:str):
+    suggestions = []
+    for video in getListVideos(topic):
+        suggestions.append(findSubTopic(topic,subtopic,video))
+    print(suggestions)
+    return suggestions
 
 
 def findSubTopic(topic:str,subtopic:str,videoID:str):
@@ -121,7 +127,7 @@ def findSubTopic(topic:str,subtopic:str,videoID:str):
             break
     if size(subtopicWords) > 1:
         computeChains(suggestions)
-    return suggestions
+    return (videoID,suggestions)
 
 
 def getListVideos(topic:str):
@@ -182,5 +188,3 @@ def connect():
     "@cluster0-shard-00-00-r9vk0.gcp.mongodb.net:27017,cluster0-shard-"+
     "00-01-r9vk0.gcp.mongodb.net:27017,cluster0-shard-00-02-r9vk0.gcp."+
     "mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true")
-
-

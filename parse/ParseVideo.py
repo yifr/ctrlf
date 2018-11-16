@@ -132,7 +132,6 @@ def transcribe_gcs():
     return retCombinedList
 
 def inputData(topic,subtopic,preParsedNodes):
-    mongo.connect()
     for video in preParsedNodes:
         mongo.insertTopic(topic,video.transcript,video.videoID,video.youtubeUrl)
 
@@ -143,6 +142,7 @@ def splitAudio(bigAudio):
 
 def getVideosGivenPlayList(playListID:str,topic:str,subtopic:str):
     #build youtube client
+    mongo.connect()
     youtube = build(YOUTUBE_API_SERVICE_NAME,
                     YOUTUBE_API_VERSION,
                     developerKey=config.YOUTUBE_API_KEY)
@@ -156,6 +156,8 @@ def getVideosGivenPlayList(playListID:str,topic:str,subtopic:str):
     for i in itemsToParse:
         title = i['snippet']['title']
         videoID = i['snippet']['resourceId']['videoId']
+        if videoID in mongo.getListVideos(topic):
+            continue
         youtubeUrl = "https://www.youtube.com/watch?v=" + videoID
         #parse the audio file
 #        parseVideos([youtubeUrl],videoID)
