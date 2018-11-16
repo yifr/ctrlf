@@ -29,7 +29,7 @@ def searchSub():
         "videoLink":suggestions[0][0],
         "timeStamps":suggestions[0][1]
     }
-    return ret
+    return jsonify(ret)
 
 
 
