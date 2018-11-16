@@ -1,12 +1,18 @@
 #Python libraries that we need to import for our bot
 import random
-from flask import Flask, request
+import logging
+import secret_info
+from wit import Wit
 from pymessenger.bot import Bot
+from flask import Flask, request
+
 
 app = Flask(__name__)
-ACCESS_TOKEN = 'ACCESS_TOKEN'
-VERIFY_TOKEN = 'VERIFY_TOKEN'
-bot = Bot(ACCESS_TOKEN)
+MESSENGER_TOKEN = secret_info.get_messenger_token()
+WIT_TOKEN = secret_info.get_wit_token()
+VERIFY_TOKEN = 'STARTED_FROM_NEW_BRUNSWICK_NOW_WE_HERE'
+bot = Bot(MESSENGER_TOKEN)
+wit_bot = Wit(WIT_TOKEN)
 
 user = {'playlist': None, 'topic':None, 'subtopics':[]}
 
@@ -19,17 +25,19 @@ def receive_message():
     #if the request was not get, it must be POST and we can just proceed with sending a message back to user
     else:
         # get whatever message a user sent the bot
-       output = request.get_json()
-       for event in output['entry']:
-          messaging = event['messaging']
-          for message in messaging:
-            if message.get('message'):
-                #Facebook Messenger ID for user so we know where to send response back to
-                recipient_id = message['sender']['id']
-                if message['message'].get('text'):
-                    response_sent_text = get_message(message['message'])
-                    send_message(recipient_id, response_sent_text)
-    return "Message Processed"
+       output = request.json
+       if output['object'] == 'page':
+           for entry in output['entry']:
+               messaging = event['messaging']
+               for message in messaging:
+                   message = messaging[0]
+                   fb_id = message['sender']['id']
+                   text = message['message']['text']
+                   response = wit_bot.message(msg=text, context={'session_id':fb_id})
+                   handle_message(response, fb_id)
+       else:
+           return 'Received Different Event'
+    return None
 
 
 def verify_fb_token(token_sent):
@@ -40,17 +48,87 @@ def verify_fb_token(token_sent):
     return 'Invalid verification token'
 
 
-def get_message(message):
+def send_message(sender_id, text):
+    data = {
+        'recipient': {'id': sender_id},
+        'message': {'text': text}
+    }
+    query_string = 'access_token=' + MESSENGER_TOKEN
+    response = requests.post('https://graph.facebook.com/me/messages?'+query_string,json=data)
+
+    return response.content
+
+def get_entity_value(entities, entity):
+    if entity not in entities:
+        return None
+    val = entities['url'][0]
+    if not val:
+        return None
+
+    return val['value'] if isinstance(val, dict) else val
+
+def handle_message(response, fb_id):
+    entities = response['entities']
+    url = get_entity_value(entities, 'url')
+    topic = get_entity_value(entities, 'topic')
+    subtopic = get_entity_value(entities, 'subtopic')
+    confirmation = get_entity_value(entities, 'confirmation')
+    negative = get_entity_value(entities, 'negative')
+
+    #Find URL
     if user['playlist'] is None:
-        response = 'To get started, I need a link to your video playlist.'
-    return response
+        if url:   
+            user['playlist'] = url
 
+            if len(entities) == 1:
+                response = "Thanks! Two more steps: \n1) Type the topic you're trying to learn about. \n2) The subtopics you are looking for in specific."
+                send_message(fb_id, response) 
+                return "Message sent"
+            else:
+               response = "Sorry, I only caught the url - could you tell me what the subject of the playlist is?"
+               send_message(fb_id, response)
+               return "Message sent"
 
-#uses PyMessenger to send response to user
-def send_message(recipient_id, response):
-    #sends user the text message provided via input response parameter
-    bot.send_text_message(recipient_id, response)
-    return "success"
+    #Add user's topic:
+    elif user['topic'] is None:
+        if topic:
+            if len(topic) == 1:
+                user['topic'] = topic
+                response = "Great! Now can you let me know the subtopics you want me to find?"
+                send_message(fb_id, response)
+                return "Message sent"
+            
+            if len(topic) > 1:
+                user['topic'] = topic[0]
+                response = topic[0] + " is pretty cool - I can only take care of one topic at a time, so let's start with that. \nWhat are some subtopics you want me to find the times for?"
+                send_message(fb_id, response)
+                return "Message sent"
 
+    #Add user's subtopics
+    else:
+        if len(subtopic) == 0:
+            if confirmation:
+                response = "Thanks for confirming that. I'll add it to the list of subtopics to flag for you. Anything else?"
+                send_message(fb_id, response)
+                return "Message sent"
+            else:
+                    response = "I'm still pretty new to this, so I'm not sure I got what you said. Just to confirm, you're looking for " + response['text'] + '?'
+                    send_message(fb_id, response)
+                    return "Message sent"
+
+        else:
+            if negative:
+                response = "Awesome. I'll look through these videos for anything interesting and get back to you in a minute"
+                #CALL SAM AND SRI'S SEARCH CLIENT
+                send_message(fb_id, response)
+                return "Message sent"
+
+            else:
+                for thing in subtopic:
+                    user['subtopics'].append(thing)
+                response = "I'll add what you just said to a subtopic list. Anything else?"
+                send_message(fb_id, response)
+                return "Message sent"
+        
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080)
