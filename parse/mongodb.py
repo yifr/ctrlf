@@ -126,7 +126,7 @@ def find(topic:str,subtopic:str):
     suggestions = []
     threads = []
     for video in getListVideos(topic):
-        videoLink = client["meta"]["videoLinks"].find({"videoID":video})["videoLink"]
+        videoLink = client["meta"]["videoLinks"].find_one({"videoID":video})["videoLink"]
         suggestions.append((videoLink,findSubTopic(topic,subtopic,video)))
 
     return suggestions
