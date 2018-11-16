@@ -26,7 +26,7 @@ class TreeNode(object):
     def __init__(self, videoID,parent,letter):
         self.videoID = videoID
         self.timeStamp = []
-        self.children = [None for i in range(0,25)]
+        self.children = [None for i in range(0,26)]
         self.treeID = uuid.uuid4()
         self.parent = parent
         self.letter = letter
@@ -67,7 +67,7 @@ def insertTopic(topic:str,transcripts:list,videoID:str,videoLink:str):
     if client == None:
         print("CLIENT IS NONE!")
     collection = client["topics"][topic]
-    insertTree(buildTree(transcripts,videoID))
+    insertTree(topic,buildTree(transcripts,videoID))
     client["meta"]["videoLinks"].insert_one({"videoID":videoID,"videoLink":videoLink})
 
 
@@ -147,7 +147,7 @@ def insertTree(topic:str,root:TreeNode):
         "letter":root.letter
     }
     client["topics"][topic].insert_one(post)
-    for i in range(0,25):
+    for i in range(0,26):
         if root.children[i] != None:
             insertTree(topic,root.children[i])
 
@@ -166,6 +166,7 @@ def insertWord(root:TreeNode,word:str,timeStamp:str,i:int):
     if i == len(word):
         root.timeStamp.append(timeStamp)
         return
+    print(word)
     if root.children[ord(word[i])-ord('a')] == None:
         root.children[ord(word[i])-ord('a')] = TreeNode(root.videoID,root.treeID,word[i])
     insertWord(root.children[ord(word[i])-ord('a')],word,timeStamp,i+1)
