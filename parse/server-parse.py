@@ -25,10 +25,16 @@ def setLink():
 def searchSub():
     requestID = str(mongo.uuid.uuid4())
     suggestions = mongo.find(request.json["topic"].upper(), request.json["subtopic"])
-    print(suggestions)
-    timeStamps = suggestions[0][1][1]["timeStamp"]
+    if(len(suggestions) == 0):
+        return jsonify({"status":400})
+    print(suggestions[0][1][1])
+
+    timeStamps = suggestions[0][1][1][0]["timeStamp"]
     for i in range(0,len(timeStamps)):
-        timeStamps[i] /= 60
+        preParsedTs = "%0.2f" % (timeStamps[i] / 60)
+        timeStamps[i] = float(preParsedTs)
+        
+        
     ret = {
         "videoLink":suggestions[0][0],
         "timeStamps":timeStamps
