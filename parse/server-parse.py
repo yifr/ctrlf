@@ -1,9 +1,12 @@
 from flask import Flask, request, json
 import mongodb as mongo
 import config
+from ParseVideo import *
+from threading import Thread
+
 
 playListLink = ""
-
+app = Flask(__name__)
 
 
 #This will change with more heuristics
@@ -16,14 +19,21 @@ def findBestSuggestion(suggestions):
 
 
 
+
 @app.route('/setPlayList', methods=['POST'])
 def setLink():
-    if not request.json:
-        abort(400)
-    separate = request.json["playListLink"].split("&list=")
-    if len(separate) != 2:
-        abort(400)
-    playListLink = separate[1]
+    t = Thread(target=ParseVideo.getVideosGivenPlayList,args="PLD6cpMQHuQEQ-005myefm5J9oiXeBXRjJ",
+        response.json["topic"], response.json["subtopic"])
+    t.start()
+    return {"status":200}
+    #if not request.json:
+    #    abort(400)
+    #separate = request.json["playListLink"].split("&list=")
+    #if len(separate) != 2:
+    #    abort(400)
+    #playListLink = separate[1]
+
+@app.route('/checkProgress', methods=['GET'])
 
 @app.route('/getVideo', methods=['POST'])
 def getVideo():
@@ -43,3 +53,6 @@ def getVideo():
         "timeStamp":bestSuggestion["timeStamp"]
     }
     return ret
+
+if __name__ == "__main__":
+    app.run(port=8080,host="0.0.0.0",debug=True)

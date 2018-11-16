@@ -128,7 +128,8 @@ def getListVideos(topic:str):
 def getVideoLink(videoID:str):
     return client["meta"]["videoLinks"].find({"videoID":videoID})["videoLink"]
 
-
+def extractSymbols(word):
+    return re.sub(r'[^\w]', ' ', word)
 
 def insertTree(topic:str,root:TreeNode):
     if client == None:
@@ -142,16 +143,19 @@ def insertTree(topic:str,root:TreeNode):
     }
     client["topics"][topic].insert_one(post)
     for i in range(0,25):
-        if root[i] != None:
-            insertTree(topic,root[i])
+        if root.children[i] != None:
+            insertTree(topic,root.children[i])
 
 #TO-DO: Need to see how transcripts look like
 def buildTree(transcripts:list):
+    root = TreeNode(transcripts[0].videoID,None,None)
+    for word in transcripts:
+        cleanWord = extractSymbols(word["word"]).lower()
+        insertWord(root,cleanWord,word["start_time"],0)
+    return root
 
 
 def insertWord(root:TreeNode,word:str,timeStamp:str,i:int):
-    if client == None:
-        print("CLIENT IS NONE!")
     if i == len(word):
         root.timeStamp.append(timeStamp)
     if root.children[ord(word[i])-ord('a')] == None:
