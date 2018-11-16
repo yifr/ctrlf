@@ -27,7 +27,7 @@ class TreeNode(object):
         self.videoID = videoID
         self.timeStamp = []
         self.children = [None for i in range(0,26)]
-        self.treeID = uuid.uuid4()
+        self.treeID = str(uuid.uuid4())
         self.parent = parent
         self.letter = letter
 
