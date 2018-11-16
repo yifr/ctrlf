@@ -12,6 +12,8 @@ import re
 
 
 client = None
+threadCount = 0
+threadCountLock = Lock()
 
 
 class TreeNode(object):
@@ -64,6 +66,9 @@ def getCachedSubTopic(topic:str,subtopic:str):
     return suggestions
 
 
+
+
+
 def insertTopic(topic:str,transcripts:list,videoID:str,videoLink:str):
     if client == None:
         print("CLIENT IS NONE!")
@@ -74,7 +79,7 @@ def insertTopic(topic:str,transcripts:list,videoID:str,videoLink:str):
 
 #Find the difference between the timestamps
 def diffTime(timeStamp1,timeStamp2):
-    return 0
+    return abs(timeStamp1-timeStamp2)
 
 def computeChains(suggestions:list):
     chains = [[suggestion[0]["timeStamp"][i]] for i in range(0,len(suggestion[0]["timeStamp"]))]
@@ -97,6 +102,7 @@ def computeChains(suggestions:list):
 
 def find(topic:str,subtopic:str):
     suggestions = []
+    threads = []
     for video in getListVideos(topic):
         suggestions.append(findSubTopic(topic,subtopic,video))
     print(suggestions)
@@ -144,6 +150,8 @@ def extractSymbols(word):
     return ""
 
 def insertTree(topic:str,root:TreeNode):
+    global threadCount
+    global threadCountLock
     if client == None:
         print("CLIENT IS NONE!")
     post = {
@@ -156,7 +164,18 @@ def insertTree(topic:str,root:TreeNode):
     client["topics"][topic].insert_one(post)
     for i in range(0,26):
         if root.children[i] != None:
-            insertTree(topic,root.children[i])
+            t = Thread(insertTree,(topic,root.children[i]))
+            while True:
+                threadCountLock.acquire()
+                if threadCount < 25:
+                    threadCount+=1
+                    threadCountLock.release()
+                    break
+                threadCountLock.release()
+            t.start()
+    threadCountLock.acquire()
+    threadCount-=1
+    threadCountLock.release()
 
 #TO-DO: Need to see how transcripts look like
 def buildTree(transcripts:list,videoID:str):
