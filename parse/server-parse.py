@@ -24,7 +24,7 @@ def setLink():
 @app.route('/searchSubtopic', methods=['GET'])
 def searchSub():
     requestID = str(mongo.uuid.uuid4())
-    suggestions = mongo.find(request.json["topic"].upper(), request.json["subtopic"], request.json["requestID"])
+    suggestions = mongo.find(request.json["topic"].upper(), request.json["subtopic"])
     ret = {
         "videoLink":suggestions[0][0],
         "timeStamps":suggestions[0][1]
