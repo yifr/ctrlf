@@ -153,16 +153,16 @@ def buildTree(transcripts:list,videoID:str):
     root = TreeNode(videoID,None,None)
     for word in transcripts:
         cleanWord = extractSymbols(word["word"]).lower()
-        insertWord(root,cleanWord,word["start_time"],0)
+        insertWord(root,cleanWord,word["start_time"],-1)
     return root
 
 
 def insertWord(root:TreeNode,word:str,timeStamp:str,i:int):
+    i+=1
     if i == len(word):
         root.timeStamp.append(timeStamp)
     if root.children[ord(word[i])-ord('a')] == None:
         root.children[ord(word[i])-ord('a')] = TreeNode(root.videoID,root.treeID,word[i])
-    i+=1
     insertWord(root.children[ord(word[i])-ord('a')],word,timeStamp,i)
 
 
