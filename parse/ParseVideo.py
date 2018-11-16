@@ -36,6 +36,10 @@ def my_hook(d):
         print('Done downloading, now converting ...')
 
 class PreParseNode(object):
+    videoID = ""
+    title = ""
+    youtbeUrl = ""
+    transcript = []
     def __init__(self,youtbeUrl,videoID,title,transcript):
         self.videoID = videoID
         self.title = title
