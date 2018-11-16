@@ -9,22 +9,11 @@ playListLink = ""
 app = Flask(__name__)
 
 
-#This will change with more heuristics
-def findBestSuggestion(suggestions):
-    ret = {
-        "videoID":suggestions[0]["videoID"],
-        "timeStamp":suggestion[0]["timeStamp"][0]
-    }
-    return ret
-
-
-
-
 @app.route('/setPlayList', methods=['POST'])
 def setLink():
     t = Thread(target=getVideosGivenPlayList,args=("PLD6cpMQHuQEQ-005myefm5J9oiXeBXRjJ",request.json["topic"].upper(), request.json["subtopic"]))
     t.start()
-    return jsonify({"status":200})
+    return jsonify({"staus":200})
     #if not request.json:
     #    abort(400)
     #separate = request.json["playListLink"].split("&list=")
@@ -34,28 +23,15 @@ def setLink():
 
 @app.route('/searchSubtopic', methods=['GET'])
 def searchSub():
-    t = t = Thread(target=mongo.find,args=(request.json["topic"].upper(), request.json["subtopic"]))
-    t.start()
-    return jsonify({"status":200})
-
-@app.route('/getVideo', methods=['POST'])
-def getVideo():
-    if not request.json and playListLink == "":
-        abort(400)
-
-    info = request.json
-    topic = info['topic']
-    subtopic = info['subtopic']
-    videoIDs = mongo.getListVideos(topic)
-    suggestions = []
-    for videoID in videoIDs:
-        suggestions.append(mongo.findSubTopic(topic,subtopic,videoID))
-    bestSuggestion = findBestSuggestion(suggestions)
+    requestID = str(mongo.uuid.uuid4())
+    suggestions = mongo.find(request.json["topic"].upper(), request.json["subtopic"], request.json["requestID"])
     ret = {
-        "videoLink":mongo.getVideoLink(bestSuggestion["videoID"]),
-        "timeStamp":bestSuggestion["timeStamp"]
+        "videoLink":suggestions[0][0],
+        "timeStamps":suggestions[0][1]
     }
     return ret
+
+
 
 if __name__ == "__main__":
     app.run(port=6969,host="0.0.0.0",debug=True)

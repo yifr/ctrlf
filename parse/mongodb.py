@@ -108,12 +108,26 @@ def computeChains(suggestions:list):
             suggestion["timeStamp"].append(newChains[i][word])
         word += 1
 
+
+def findBestSuggestion(suggestions):
+    if client == None:
+        connect()
+    videoLink = client["requests"]["0"]
+    ret = {
+        "videoLink":suggestions[0]["videoID"],
+        "timeStamp":suggestion[0]["timeStamp"]
+    }
+    return ret
+
 def find(topic:str,subtopic:str):
+    if client == None:
+        connect()
     suggestions = []
     threads = []
     for video in getListVideos(topic):
-        suggestions.append(findSubTopic(topic,subtopic,video))
-    print(suggestions)
+        videoLink = client["meta"]["videoLinks"].find({"videoID":video})["videoLink"]
+        suggestions.append((videoLink,findSubTopic(topic,subtopic,video)))
+
     return suggestions
 
 
