@@ -117,6 +117,21 @@ def integrate_cool_stuff(topic, subtopic):
     return response
 
 
+#Create time embedded youtube links
+def get_timestamped_links(response):
+    base_url = response['videoLink']
+    time_tags = response['timeTags']
+    ret_string = ""
+    i = 1
+    for tag in time_tags:
+        times = tag.split('.')
+        total_time = times[0] * 60 + times[1]
+        timetagged = base_url + '&t='+str(total_time)
+        ret_string += str(i) + ') ' + timetagged + '\n'
+        i += 1
+
+    return ret_string
+
 def handle_message(response, fb_id):
 
     if user['playlist'] == None:
@@ -132,26 +147,22 @@ def handle_message(response, fb_id):
 
     else:
         if end_sequence(response):
-            #############################
-            #   INTEGRATE COOL  STUFF   #
-            #############################
+            user['playlist'] = None
+            user['topic'] = None
+            user['subtopic'] = None
             return "It\'s been a pleasure working with you!"
+            
+
         else:
             subtopic = response.split(',')
             if len(subtopic) > 1:
-                
                 return "Whoa there! I am but a simple bot. What subtopic would you like to search first?" 
+
             else:
                 response = integrate_cool_stuff(user['topic'], subtopic[0])
-                print('RESPONSE:', response) 
-                ret_string = "Found something for you!\n\nHere's the link to your video:\n", response['videoLink']
-                ret_string += "\n\nAnd here are all the best parts!"
-                for stamp in response['timeStamps']:
-                    ret_string += "\n"+str(stamp)
-                
-                ret_string += "\n\nIf you have another topics you want to search for, input them now. Otherwise, type 'no'."
-
+                ret_string = get_timestamped_links(response)
                 return ret_string
+
     return "Sorry - something seems to have gone dreadfully wrong. Run while you still can."
     
     '''
