@@ -1,11 +1,13 @@
 #Python libraries that we need to import for our bot
+import re
+import json
 import random
 import logging
 import requests
 import secret_info
 from wit import Wit
 from pymessenger.bot import Bot
-from flask import Flask, request
+from flask import Flask, request, Response,jsonify
 
 
 app = Flask(__name__)
@@ -13,7 +15,7 @@ MESSENGER_TOKEN = secret_info.get_messenger_token()
 WIT_TOKEN = secret_info.get_wit_token()
 VERIFY_TOKEN = 'STARTED_FROM_NEW_BRUNSWICK_NOW_WE_HERE'
 bot = Bot(MESSENGER_TOKEN)
-wit_bot = Wit(WIT_TOKEN)
+#wit_bot = Wit(WIT_TOKEN)
 
 user = {'playlist': None, 'topic':None, 'subtopics':[]}
 
@@ -25,21 +27,60 @@ def receive_message():
         return verify_fb_token(token_sent)
     #if the request was not get, it must be POST and we can just proceed with sending a message back to user
     else:
+        data = request.get_data().decode('utf-8')
+        data = json.loads(data)
+        for entry in data['entry']:
+            print('Entry ---->', entry)
+            if 'message' in entry['messaging'][0]:
+                    user_message = entry['messaging'][0]['message']['text']
+                    user_id = entry['messaging'][0]['sender']['id']
+                    response = {
+                        'recipient' : {'id': user_id},
+                        'message' : {}
+                    }
+                    text = handle_message(user_message, user_id)
+                    bot.send_text_message(user_id, text)
+                    response['message']['text'] = text
+                    response['Content-type'] = 'application/json'
+                    r = requests.post('https://graph.facebook.com/v2/6/me/messages/?access_token'+MESSENGER_TOKEN, json=response)
+                    return jsonify({"status":200})
+            else:
+                return jsonify({'status':200})     
+'''
         # get whatever message a user sent the bot
         data = request.json
-        if data['obect'] == 'page':
-            for entry in data['entry']:
-            messages = entry['messaging']
+        if data['object'] == 'page':
+            #for entry in data['entry']:
+            messages = data['entry'][0]['messaging']
+            print('\n',  messages)
             if messages[0]:
-                message = messages[0]
+                print()
+                if len(messages[0]) <= 6:
+                    message = messages[0]
+                    print('message[message]:', message['message'])
+                    fb_id = message['sender']['id']
+                    text = message['message']['text']
+                    #response = wit_bot.message(msg=text, context={'session_id':fb_id})
+                    handle_message(response, fb_id)
+                     
+            else:
                 fb_id = message['sender']['id']
-                text = message['message']['text']
-                response = wit_bot.message(msg=text, context={'session_id':fb_id})
-                handle_message(response, fb_id)
-       else:
-           return 'Received Different Event'
-    return "Success" 
+                send_message(fb_id, 'Something has gone wrong')
+                return "Failure"
+        else:
+            return 'Received Different Event'
+    return "Success!" 
 
+
+def get_entity_value(entities, entity):
+    if entity not in entities:
+        return None
+    val = entities[entity][0]
+    if not val:
+        return None
+
+    return val['value'] if isinstance(val, dict) else val
+'''
 
 def verify_fb_token(token_sent):
     #take token sent by facebook and verify it matches the verify token you sent
@@ -59,20 +100,49 @@ def send_message(sender_id, text):
 
     return response.content
 
-def get_entity_value(entities, entity):
-    if entity not in entities:
-        return None
-    val = entities[entity][0]
-    if not val:
-        return None
+def end_sequence(message):
+    message = message.lower()
+    print("END_SEQUENCE: ", message)
+    if message == 'no' or message == 'nope' or message == 'na' or message == "that's it" or message == "i'm done" or message == "nothing else" or message == "that's all":
+        return True
+    else:
+        return False
 
-    return val['value'] if isinstance(val, dict) else val
+
 
 def handle_message(response, fb_id):
+
+    print('RESPONSE', response)
+    if user['playlist'] == None:
+        if True:
+            user['playlist'] = response
+            return "Thanks! What's this video about?"
+        else:
+            return "Sorry, you need to give me a link to a video before I can help you"
+
+    elif user['topic'] == None:
+        user['topic'] = response
+        return "Great! What subtopics do you want me to look for?"
+
+    else:
+        if end_sequence(response):
+            #############################
+            #   INTEGRATE COOL  STUFF   #
+            #############################
+            return "Fantastic. Give me a minute to look through this and I'll get right back to you."
+        else:
+            subtopics = response.split(',')
+            for topic in subtopics:
+                user['subtopics'].append(topic)
+
+            return "Cool, I'll add that to my list of things to look for. Anything else?"
+    
+    return "Sorry - something seems to have gone dreadfully wrong. Run while you still can."
+    
+    '''
     entities = response['entities']
     url = get_entity_value(entities, 'url')
     topic = get_entity_value(entities, 'topic')
-    subtopic = get_entity_value(entities, 'subtopic')
     confirmation = get_entity_value(entities, 'confirmation')
     negative = get_entity_value(entities, 'negative')
 
@@ -109,7 +179,7 @@ def handle_message(response, fb_id):
     else:
         if topic == None:
             if confirmation:
-                response = "Thanks for confirming that. I'll add "response['text'] " to the list of subtopics to flag for you. Anything else?"
+                response = "Thanks for confirming that. I'll add " + response['text'] + " to the list of subtopics to flag for you. Anything else?"
                 user['topic'].append(response['text'])
                 send_message(fb_id, response)
                 return "Message sent"
@@ -126,11 +196,13 @@ def handle_message(response, fb_id):
                 return "Message sent"
 
             else:
-                for thing in subtopic:
+                for thing in topic:
                     user['subtopics'].append(thing)
                 response = "I'll add what you just said to a subtopic list. Anything else?"
                 send_message(fb_id, response)
                 return "Message sent"
-        
+    return send_message(fb_id, 'Sorry, something went wrong. Enter a link and try again') 
+    '''
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080)
