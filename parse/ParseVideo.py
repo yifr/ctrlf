@@ -88,7 +88,7 @@ def performWork(name):
 
         os.remove(real_name)
 
-        reduce((real_name,ljson_arr))
+        reduce((real_name,json_arr))
 
 
 def parseVideos(svideoLink:list,outputId):
@@ -158,14 +158,14 @@ def getVideosGivenPlayList(playListID:str,topic:str,subtopic:str):
         videoID = i['snippet']['resourceId']['videoId']
         youtubeUrl = "https://www.youtube.com/watch?v=" + videoID
         #parse the audio file
-        parseVideos([youtubeUrl],videoID)
+#        parseVideos([youtubeUrl],videoID)
         #convert mp3 to flac
 
         #uri = uploadToGcp("out.flac")
         #split the audiio file
         splitAudio(videoID +".mp3")
         ret = transcribe_gcs()
-        print(ret)
+ #       print(ret)
         preParsedNodes.append(PreParseNode(youtubeUrl,videoID,title,ret))
         inputData(topic,subtopic,preParsedNodes)
     return preParsedNodes
