@@ -69,6 +69,31 @@ def insertTopic(topic:str,transcripts:list,videoID:str,videoLink:str):
     client["meta"]["videoLinks"].insert_one({"videoID":videoID,"videoLink":videoLink})
 
 
+#Find the difference between the timestamps
+def diffTime(timeStamp1,timeStamp2):
+    return 0
+
+def computeChains(suggestions:list):
+    chains = [[suggestion[0]["timeStamp"][i]] for i in range(0,size(suggestion[0]["timeStamp"]))]
+    finished = {}
+    for i in range(1,size(suggestions)):
+        for chain in chains:
+            for timeStamp in suggestions[i]["timeStamp"]:
+                if diffTime(chain[size(chain)-1],timeStamp) <= 1 and chain not in finished:
+                    chain.append(timeStamp)
+                    finished[chain] = True
+            if len(chain) != i+1:
+                chain = None
+            finished = {}
+    word = 0
+    for suggestion in suggestions:
+        suggestion["timeStamp"] = []
+        for i in range(0,size(chains[word])):
+            suggestion["timeStamp"].append(chains[i][word])
+        word += 1
+
+
+
 def findSubTopic(topic:str,subtopic:str,videoID:str):
     if(isSubtopicCached(topic,subtopic)):
         return getCachedSubTopic(topic,subtopic)
@@ -88,11 +113,20 @@ def findSubTopic(topic:str,subtopic:str,videoID:str):
                 break
             parent = curDoc["treeID"]
             i+=1
-        suggestions.append(curDoc)
+        if curDoc != None:
+            suggestions.append(curDoc)
+        else:
+            break
+    if size(subtopicWords) > 1:
+        computeChains(suggestions)
     return suggestions
 
 
+def getListVideos(topic:str):
+    return client["topics"][topic].find().distinct("videoID")
 
+def getVideoLink(videoID:str):
+    return client["meta"]["videoLinks"].find({"videoID":videoID})["videoLink"]
 
 
 
