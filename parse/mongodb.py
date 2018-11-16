@@ -88,21 +88,18 @@ def computeChains(suggestions:list):
         j = 0
         for chain in chains:
             for timeStamp in suggestions[i]["timeStamp"]:
-
                 if diffTime(chain[len(chain)-1],timeStamp) <= 1 and j not in finished:
                     chain.append(timeStamp)
                     finished[j] = True
-
-           finished = {}
-           j +=1
+            finished = {}
+            j +=1
         chainMax +=1
     newChains = []
-
     for chain in chains:
         if(len(chain) == chainMax):
             newChains.append(chain)
-    
-        
+
+
     word = 0
     print(newChains)
     for suggestion in suggestions:
