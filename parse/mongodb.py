@@ -153,7 +153,7 @@ def buildTree(transcripts:list,videoID:str):
     root = TreeNode(videoID,None,None)
     for word in transcripts:
         cleanWord = extractSymbols(word["word"]).lower()
-        insertWord(root,cleanWord,word["start_time"],-1)
+        insertWord(root,cleanWord,word["start_time"],0)
     return root
 
 
