@@ -25,6 +25,7 @@ def setLink():
 def searchSub():
     requestID = str(mongo.uuid.uuid4())
     suggestions = mongo.find(request.json["topic"].upper(), request.json["subtopic"])
+    print(suggestions)
     ret = {
         "videoLink":suggestions[0][0],
         "timeStamps":suggestions[0][1]
