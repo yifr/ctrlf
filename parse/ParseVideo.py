@@ -59,7 +59,6 @@ def performWork(name):
     os.remove(name)
     with io.open(real_name, 'rb') as audio_file:
 
-        json_ret = {}
         content = audio_file.read()
 
         audio = types.RecognitionAudio(content=content)
@@ -77,10 +76,9 @@ def performWork(name):
             alternative = result.alternatives[0]
     # The first alternative is the most likely one for this portion.
             #print(u'Transcript: {}'.format(result.alternatives[0].transcript))
-            for i in range(len(alternative.words)):
-                    word_info = alternative.words[i]
+            for word_info in alternative.words:
                     word = word_info.word
-
+                    json_ret = {}
                     start_time = word_info.start_time
                     end_time = word_info.end_time
                     json_ret['word'] = word
@@ -160,14 +158,14 @@ def getVideosGivenPlayList(playListID:str,topic:str,subtopic:str):
         videoID = i['snippet']['resourceId']['videoId']
         youtubeUrl = "https://www.youtube.com/watch?v=" + videoID
         #parse the audio file
-        parseVideos([youtubeUrl],videoID)
+#        parseVideos([youtubeUrl],videoID)
         #convert mp3 to flac
 
         #uri = uploadToGcp("out.flac")
         #split the audiio file
         splitAudio(videoID +".mp3")
         ret = transcribe_gcs()
-        print(ret)
+ #       print(ret)
         preParsedNodes.append(PreParseNode(youtubeUrl,videoID,title,ret))
         inputData(topic,subtopic,preParsedNodes)
     return preParsedNodes
