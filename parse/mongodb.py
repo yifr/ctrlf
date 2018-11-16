@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import config
 import uuid
 from util import PreParseNode
+import re
 
 
 
