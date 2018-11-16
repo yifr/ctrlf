@@ -23,18 +23,17 @@ def setLink():
 
 @app.route('/searchSubtopic', methods=['GET'])
 def searchSub():
-    requestID = str(mongo.uuid.uuid4())
-    suggestions = mongo.find(request.json["topic"].upper(), request.json["subtopic"])
-    if(len(suggestions) == 0):
-        return jsonify({"status":400})
-    print(suggestions[0][1][1])
 
+    if not request.json["topic"] or not request.json["subtopic"]:
+        return jsonify({"status":400})
+    topic = request.json["topic"].upper().replace(" ","_")
+    suggestions = mongo.find(topic, request.json["subtopic"])
     timeStamps = suggestions[0][1][1][0]["timeStamp"]
     for i in range(0,len(timeStamps)):
         preParsedTs = "%0.2f" % (timeStamps[i] / 60)
         timeStamps[i] = float(preParsedTs)
-        
-        
+
+
     ret = {
         "videoLink":suggestions[0][0],
         "timeStamps":timeStamps
