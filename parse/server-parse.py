@@ -32,7 +32,11 @@ def setLink():
     #    abort(400)
     #playListLink = separate[1]
 
-@app.route('/checkProgress', methods=['GET'])
+@app.route('/searchSubtopic', methods=['GET'])
+def searchSub():
+    t = t = Thread(target=mongo.find,args=(request.json["topic"].upper(), request.json["subtopic"]))
+    t.start()
+    return jsonify({"status":200})
 
 @app.route('/getVideo', methods=['POST'])
 def getVideo():

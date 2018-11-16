@@ -82,8 +82,8 @@ def performWork(name):
                     start_time = word_info.start_time
                     end_time = word_info.end_time
                     json_ret['word'] = word
-                    json_ret['start_time'] = start_time.seconds + start_time.nanos * 1e-9
-                    json_ret['end_time'] = end_time.seconds + end_time.nanos * 1e-9
+                    json_ret['start_time'] = start_time.seconds
+                    json_ret['end_time'] = end_time.seconds
                     json_arr.append(json_ret)
 
         os.remove(real_name)
@@ -123,16 +123,15 @@ def transcribe_gcs():
     retCombinedList = []
     for i in currentReduceList:
         for j in i[1]:
-            j["start_time"]+=previousTimeStamp
-            j["end_time"]+=previousTimeStamp
-        previousTimeStamp = i[1][len(i[1])-1]["end_time"]
+            j["start_time"]+=(previousTimeStamp * 59)
+            j["end_time"]+=(previousTimeStamp*59)
+        previousTimeStamp +=1
         retCombinedList.extend(i[1])
     #print(retCombinedList)
     #print(len(retCombinedList))
     return retCombinedList
 
 def inputData(topic,subtopic,preParsedNodes):
-    mongo.connect()
     for video in preParsedNodes:
         mongo.insertTopic(topic,video.transcript,video.videoID,video.youtubeUrl)
 
@@ -143,6 +142,7 @@ def splitAudio(bigAudio):
 
 def getVideosGivenPlayList(playListID:str,topic:str,subtopic:str):
     #build youtube client
+    mongo.connect()
     youtube = build(YOUTUBE_API_SERVICE_NAME,
                     YOUTUBE_API_VERSION,
                     developerKey=config.YOUTUBE_API_KEY)
@@ -156,6 +156,8 @@ def getVideosGivenPlayList(playListID:str,topic:str,subtopic:str):
     for i in itemsToParse:
         title = i['snippet']['title']
         videoID = i['snippet']['resourceId']['videoId']
+        if videoID in mongo.getListVideos(topic):
+            continue
         youtubeUrl = "https://www.youtube.com/watch?v=" + videoID
         #parse the audio file
 #        parseVideos([youtubeUrl],videoID)

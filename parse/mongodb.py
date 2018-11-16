@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import config
 import uuid
 from util import PreParseNode
+from threading import Thread,Lock
 import re
 
 
@@ -40,13 +41,14 @@ def getFromCache(topic:str,subtopic:str):
     document = collection.find_one({"topic":topic})
     return document
 
+
 def isSubtopicCached(topic:str,subtopic:str):
     if client == None:
         print("CLIENT IS NONE!")
-    if not containsTopic(topic):
-        return False
 
     document = getFromCache(topic,subtopic)
+    if not document:
+        return False
     if subtopic in document["subtopics"]:
         return True
     return False
@@ -63,6 +65,9 @@ def getCachedSubTopic(topic:str,subtopic:str):
     return suggestions
 
 
+
+
+
 def insertTopic(topic:str,transcripts:list,videoID:str,videoLink:str):
     if client == None:
         print("CLIENT IS NONE!")
@@ -73,27 +78,44 @@ def insertTopic(topic:str,transcripts:list,videoID:str,videoLink:str):
 
 #Find the difference between the timestamps
 def diffTime(timeStamp1,timeStamp2):
-    return 0
+    return abs(timeStamp1-timeStamp2)
 
 def computeChains(suggestions:list):
-    chains = [[suggestion[0]["timeStamp"][i]] for i in range(0,size(suggestion[0]["timeStamp"]))]
+    chains = [[suggestions[0]["timeStamp"][i]] for i in range(0,len(suggestions[0]["timeStamp"]))]
     finished = {}
-    for i in range(1,size(suggestions)):
+    chainMax = 1
+    for i in range(1,len(suggestions)):
+        j = 0
         for chain in chains:
             for timeStamp in suggestions[i]["timeStamp"]:
-                if diffTime(chain[size(chain)-1],timeStamp) <= 1 and chain not in finished:
+                if diffTime(chain[len(chain)-1],timeStamp) <= 1 and j not in finished:
                     chain.append(timeStamp)
-                    finished[chain] = True
-            if len(chain) != i+1:
-                chain = None
+                    finished[j] = True
             finished = {}
+            j +=1
+        chainMax +=1
+    newChains = []
+    for chain in chains:
+        if(len(chain) == chainMax):
+            newChains.append(chain)
+
+
     word = 0
+    print(newChains)
     for suggestion in suggestions:
         suggestion["timeStamp"] = []
-        for i in range(0,size(chains[word])):
-            suggestion["timeStamp"].append(chains[i][word])
+        for i in range(0,len(newChains)):
+            suggestion["timeStamp"].append(newChains[i][word])
         word += 1
+    print(suggestions)
 
+def find(topic:str,subtopic:str):
+    suggestions = []
+    threads = []
+    for video in getListVideos(topic):
+        suggestions.append(findSubTopic(topic,subtopic,video))
+    print(suggestions)
+    return suggestions
 
 
 def findSubTopic(topic:str,subtopic:str,videoID:str):
@@ -101,7 +123,7 @@ def findSubTopic(topic:str,subtopic:str,videoID:str):
         return getCachedSubTopic(topic,subtopic)
     subtopicWords = subtopic.split(" ")
     suggestions = []
-    for i in range(0,size(subtopicWords)):
+    for i in range(0,len(subtopicWords)):
         subtopic = subtopicWords[i]
         rootDoc = client["topics"][topic].find_one({"videoID":videoID,"parent":None})
         if rootDoc == None:
@@ -119,9 +141,9 @@ def findSubTopic(topic:str,subtopic:str,videoID:str):
             suggestions.append(curDoc)
         else:
             break
-    if size(subtopicWords) > 1:
+    if len(subtopicWords) > 1:
         computeChains(suggestions)
-    return suggestions
+    return (videoID,suggestions)
 
 
 def getListVideos(topic:str):
@@ -166,7 +188,6 @@ def insertWord(root:TreeNode,word:str,timeStamp:str,i:int):
     if i == len(word):
         root.timeStamp.append(timeStamp)
         return
-    print(word)
     if root.children[ord(word[i])-ord('a')] == None:
         root.children[ord(word[i])-ord('a')] = TreeNode(root.videoID,root.treeID,word[i])
     insertWord(root.children[ord(word[i])-ord('a')],word,timeStamp,i+1)
@@ -182,5 +203,3 @@ def connect():
     "@cluster0-shard-00-00-r9vk0.gcp.mongodb.net:27017,cluster0-shard-"+
     "00-01-r9vk0.gcp.mongodb.net:27017,cluster0-shard-00-02-r9vk0.gcp."+
     "mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true")
-
-
