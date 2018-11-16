@@ -125,7 +125,7 @@ def transcribe_gcs():
         for j in i[1]:
             j["start_time"]+=(previousTimeStamp * 59)
             j["end_time"]+=(previousTimeStamp*59)
-        previousTimeStamp +=1 
+        previousTimeStamp +=1
         retCombinedList.extend(i[1])
     #print(retCombinedList)
     #print(len(retCombinedList))

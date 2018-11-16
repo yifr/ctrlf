@@ -13,8 +13,6 @@ import re
 
 
 client = None
-threadCount = 0
-threadCountLock = Lock()
 
 
 class TreeNode(object):
@@ -151,9 +149,6 @@ def extractSymbols(word):
     return ""
 
 def insertTree(topic:str,root:TreeNode):
-    global threadCount
-    global threadCountLock
-    client = connect_ret()
     if client == None:
         print("CLIENT IS NONE!")
     post = {
@@ -163,12 +158,10 @@ def insertTree(topic:str,root:TreeNode):
         "parent":root.parent,
         "letter":root.letter
     }
-    client["topics"][topic].insert_one(post)
+    client["topics"][topic].insert_one(post,w=0)
     for i in range(0,26):
         if root.children[i] != None:
-
-            t = Thread(target=insertTree,args=(topic,root.children[i]))
-            t.start()
+            insertTree(topic,root.children[i])
 
 #TO-DO: Need to see how transcripts look like
 def buildTree(transcripts:list,videoID:str):
@@ -200,10 +193,3 @@ def connect():
     "@cluster0-shard-00-00-r9vk0.gcp.mongodb.net:27017,cluster0-shard-"+
     "00-01-r9vk0.gcp.mongodb.net:27017,cluster0-shard-00-02-r9vk0.gcp."+
     "mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true")
-
-def connect_ret():
-    client = MongoClient("mongodb://azoam:"+config.MongoPass+
-    "@cluster0-shard-00-00-r9vk0.gcp.mongodb.net:27017,cluster0-shard-"+
-    "00-01-r9vk0.gcp.mongodb.net:27017,cluster0-shard-00-02-r9vk0.gcp."+
-    "mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true")
-    return client
