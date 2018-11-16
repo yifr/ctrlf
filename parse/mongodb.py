@@ -160,9 +160,10 @@ def buildTree(transcripts:list,videoID:str):
 def insertWord(root:TreeNode,word:str,timeStamp:str,i:int):
     if i == len(word):
         root.timeStamp.append(timeStamp)
+        return
     if root.children[ord(word[i])-ord('a')] == None:
         root.children[ord(word[i])-ord('a')] = TreeNode(root.videoID,root.treeID,word[i])
-    insertWord(root.children[ord(word[i])-ord('a')],word,timeStamp,i+1)
+    insertWord(root.children[ord(word[i])-ord('a')],word,timeStamp,1)
 
 
 
