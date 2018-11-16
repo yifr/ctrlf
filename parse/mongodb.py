@@ -24,10 +24,10 @@ class TreeNode(object):
     def __init__(self, videoID,parent,letter):
         self.videoID = videoID
         self.timeStamp = []
-        this.children = [None for i in range(0,25)]
-        this.treeID = uuid.uuid4()
-        this.parent = parent
-        this.letter = letter
+        self.children = [None for i in range(0,25)]
+        self.treeID = uuid.uuid4()
+        self.parent = parent
+        self.letter = letter
 
 
 
@@ -108,7 +108,7 @@ def findSubTopic(topic:str,subtopic:str,videoID:str):
         i = 0
         curDoc = None
         while i < len(subtopic):
-            curDoc = client["topics"][topic].find_one({"videoID":videoID,"parent":parent,"letter":char(subtopic[i]}))
+            curDoc = client["topics"][topic].find_one({"videoID":videoID,"parent":parent,"letter":subtopic[i]})
             if curDoc == None:
                 break
             parent = curDoc["treeID"]
@@ -160,7 +160,8 @@ def insertWord(root:TreeNode,word:str,timeStamp:str,i:int):
         root.timeStamp.append(timeStamp)
     if root.children[ord(word[i])-ord('a')] == None:
         root.children[ord(word[i])-ord('a')] = TreeNode(root.videoID,root.treeID,char(word[i]))
-    insertWord(root.children[ord(word[i])],word,timeStamp,i+=1)
+    i+=1
+    insertWord(root.children[ord(word[i])],word,timeStamp,i)
 
 
 
@@ -169,7 +170,9 @@ def removeTree(videoID:str):
 
 def connect():
     global client
-    client = pymongo.MongoClient("mongodb://azoam:"+config.MongoPass+
+    client = MongoClient("mongodb://azoam:"+config.MongoPass+
     "@cluster0-shard-00-00-r9vk0.gcp.mongodb.net:27017,cluster0-shard-"+
     "00-01-r9vk0.gcp.mongodb.net:27017,cluster0-shard-00-02-r9vk0.gcp."+
     "mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true")
+
+connect()

@@ -1,4 +1,4 @@
-from flask import Flask, request, json
+from flask import Flask, request, json, jsonify
 import mongodb as mongo
 import config
 from ParseVideo import *
@@ -22,10 +22,9 @@ def findBestSuggestion(suggestions):
 
 @app.route('/setPlayList', methods=['POST'])
 def setLink():
-    t = Thread(target=getVideosGivenPlayList,args="PLD6cpMQHuQEQ-005myefm5J9oiXeBXRjJ",
-        response.json["topic"].upper(), response.json["subtopic"])
+    t = Thread(target=getVideosGivenPlayList,args=("PLD6cpMQHuQEQ-005myefm5J9oiXeBXRjJ",request.json["topic"].upper(), request.json["subtopic"]))
     t.start()
-    return {"status":200}
+    return jsonify({"status":200})
     #if not request.json:
     #    abort(400)
     #separate = request.json["playListLink"].split("&list=")
@@ -55,4 +54,4 @@ def getVideo():
     return ret
 
 if __name__ == "__main__":
-    app.run(port=8080,host="0.0.0.0",debug=True)
+    app.run(port=6969,host="0.0.0.0",debug=True)
