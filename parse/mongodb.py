@@ -104,9 +104,10 @@ def computeChains(suggestions:list):
     print(newChains)
     for suggestion in suggestions:
         suggestion["timeStamp"] = []
-        for i in range(0,len(newChains[word])):
+        for i in range(0,len(newChains)):
             suggestion["timeStamp"].append(newChains[i][word])
         word += 1
+    print(suggestions)
 
 def find(topic:str,subtopic:str):
     suggestions = []
