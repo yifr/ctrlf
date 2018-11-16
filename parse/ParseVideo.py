@@ -16,7 +16,6 @@ YOUTUBE_API_VERSION = "v3"
 import config
 max_timestamp = 0
 currentReduceList = []
-retCombinedList = []
 lock = Lock()
 
 
@@ -132,6 +131,7 @@ def transcribe_gcs():
     for i in threads:
         i.join()
     previousTimeStamp = 0
+    retCombinedList = []
     for i in currentReduceList:
         for j in i[1]:
             j["start_time"]+=previousTimeStamp
@@ -140,7 +140,7 @@ def transcribe_gcs():
         retCombinedList.extend(i[1])
     #print(retCombinedList)
     #print(len(retCombinedList))
-    #return retCombinedList
+    return retCombinedList
 
 def inputData(topic,subtopic,preParsedNodes):
     mongo.connect()
