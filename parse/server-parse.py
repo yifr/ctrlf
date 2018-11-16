@@ -22,8 +22,8 @@ def findBestSuggestion(suggestions):
 
 @app.route('/setPlayList', methods=['POST'])
 def setLink():
-    t = Thread(target=ParseVideo.getVideosGivenPlayList,args="PLD6cpMQHuQEQ-005myefm5J9oiXeBXRjJ",
-        response.json["topic"], response.json["subtopic"])
+    t = Thread(target=getVideosGivenPlayList,args="PLD6cpMQHuQEQ-005myefm5J9oiXeBXRjJ",
+        response.json["topic"].upper(), response.json["subtopic"])
     t.start()
     return {"status":200}
     #if not request.json:
