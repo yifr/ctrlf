@@ -136,7 +136,7 @@ def transcribe_gcs():
 def inputData(topic,subtopic,preParsedNodes):
     mongo.connect()
     for video in preParsedNodes:
-        mongo.insertTopic(topic,video.transcript,video.videoID,video.youtbeUrl)
+        mongo.insertTopic(topic,video.transcript,video.videoID,video.youtubeUrl)
 
 
 def splitAudio(bigAudio):
